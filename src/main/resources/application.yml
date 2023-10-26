@@ -6,6 +6,15 @@ logging:
     org.springframework.security: info
 
 spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/sso_demo
+    username: root
+    password: Root@123
+  jpa:
+    generate-ddl: true
+    hibernate:
+      ddl-auto: update
   security:
     oauth2:
       authorizationserver:
