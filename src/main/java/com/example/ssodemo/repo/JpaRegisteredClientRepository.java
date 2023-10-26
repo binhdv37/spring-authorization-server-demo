@@ -4,6 +4,7 @@ import com.example.ssodemo.model.Client;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PostConstruct;
 import org.springframework.security.jackson2.SecurityJackson2Modules;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
@@ -16,12 +17,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
-@Component
+//@Component
 public class JpaRegisteredClientRepository implements RegisteredClientRepository {
     private final ClientRepository clientRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -56,6 +54,24 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
             return ClientAuthenticationMethod.NONE;
         }
         return new ClientAuthenticationMethod(clientAuthenticationMethod);      // Custom client authentication method
+    }
+
+    @PostConstruct
+    void init() {
+        // FIXME: remove, move this function to a API
+        RegisteredClient existed = this.findByClientId("public-client");
+        if (existed == null) {
+            RegisteredClient registeredClient = RegisteredClient
+                    .withId(UUID.randomUUID().toString())
+                    .clientId("public-client")
+                    .clientName("web admin")
+                    .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+                    .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                    .scope("openid")
+                    .redirectUri("http://localhost:4200")
+                    .build();
+            this.save(registeredClient);
+        }
     }
 
     @Override
