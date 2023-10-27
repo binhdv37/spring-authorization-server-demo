@@ -1,7 +1,6 @@
 package com.example.ssodemo.config;
 
-import com.example.ssodemo.repo.ClientRepository;
-import com.example.ssodemo.repo.JpaRegisteredClientRepository;
+import com.example.ssodemo.repo.*;
 import com.example.ssodemo.service.UserDetailServiceImpl;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -129,8 +128,21 @@ public class SecurityConfig {
 //    }
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository(ClientRepository clientRepository) {
-        return new JpaRegisteredClientRepository(clientRepository);
+    public RegisteredClientRepository registeredClientRepository(
+            ClientRepository clientRepository,
+            StcClientAuthenticationMethodRepository stcClientAuthenticationMethodRepository,
+            StcAuthorizationGrantTypeRepository stcAuthorizationGrantTypeRepository,
+            RedirectUriRepository redirectUriRepository,
+            PostLogoutRedirectUriRepository postLogoutRedirectUriRepository,
+            ScopeRepository scopeRepository
+    ) {
+        return new JpaRegisteredClientRepository(
+                clientRepository,
+                stcClientAuthenticationMethodRepository,
+                stcAuthorizationGrantTypeRepository,
+                redirectUriRepository,
+                postLogoutRedirectUriRepository,
+                scopeRepository);
     }
 
     // jwk source: use for signing access token

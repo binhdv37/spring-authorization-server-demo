@@ -1,6 +1,6 @@
 package com.example.ssodemo.repo;
 
-import com.example.ssodemo.model.Client;
+import com.example.ssodemo.model.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -13,20 +13,41 @@ import org.springframework.security.oauth2.server.authorization.client.Registere
 import org.springframework.security.oauth2.server.authorization.jackson2.OAuth2AuthorizationServerJackson2Module;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
 import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
-import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 //@Component
 public class JpaRegisteredClientRepository implements RegisteredClientRepository {
-    private final ClientRepository clientRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ClientRepository clientRepository;
+    private final StcClientAuthenticationMethodRepository stcClientAuthenticationMethodRepository;
+    private final StcAuthorizationGrantTypeRepository stcAuthorizationGrantTypeRepository;
+    private final RedirectUriRepository redirectUriRepository;
+    private final PostLogoutRedirectUriRepository postLogoutRedirectUriRepository;
+    private final ScopeRepository scopeRepository;
 
-    public JpaRegisteredClientRepository(ClientRepository clientRepository) {
+
+    public JpaRegisteredClientRepository(
+            ClientRepository clientRepository,
+            StcClientAuthenticationMethodRepository stcClientAuthenticationMethodRepository,
+            StcAuthorizationGrantTypeRepository stcAuthorizationGrantTypeRepository,
+            RedirectUriRepository redirectUriRepository,
+            PostLogoutRedirectUriRepository postLogoutRedirectUriRepository,
+            ScopeRepository scopeRepository
+    ) {
         Assert.notNull(clientRepository, "clientRepository cannot be null");
         this.clientRepository = clientRepository;
+        this.stcClientAuthenticationMethodRepository = stcClientAuthenticationMethodRepository;
+        this.stcAuthorizationGrantTypeRepository = stcAuthorizationGrantTypeRepository;
+        this.redirectUriRepository = redirectUriRepository;
+        this.postLogoutRedirectUriRepository = postLogoutRedirectUriRepository;
+        this.scopeRepository = scopeRepository;
 
         ClassLoader classLoader = JpaRegisteredClientRepository.class.getClassLoader();
         List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
@@ -75,10 +96,61 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         }
     }
 
+    @Transactional
     @Override
     public void save(RegisteredClient registeredClient) {
         Assert.notNull(registeredClient, "registeredClient cannot be null");
-        this.clientRepository.save(toEntity(registeredClient));
+        Client savedClient = this.clientRepository.save(toEntity(registeredClient));
+
+        // client authentication method
+        Set<StcClientAuthenticationMethod> clientAuthenticationMethods = registeredClient.getClientAuthenticationMethods().stream().map(x -> {
+            StcClientAuthenticationMethod stcClientAuthenticationMethod = new StcClientAuthenticationMethod();
+            stcClientAuthenticationMethod.setId(UUID.randomUUID().toString());
+            stcClientAuthenticationMethod.setValue(x.getValue());
+            stcClientAuthenticationMethod.setClient(savedClient);
+            return stcClientAuthenticationMethod;
+        }).collect(Collectors.toSet());
+        stcClientAuthenticationMethodRepository.saveAll(clientAuthenticationMethods);
+
+        // authorization grant types
+        Set<StcAuthorizationGrantType> stcAuthorizationGrantTypes = registeredClient.getAuthorizationGrantTypes().stream().map(x -> {
+            StcAuthorizationGrantType stcAuthorizationGrantType = new StcAuthorizationGrantType();
+            stcAuthorizationGrantType.setId(UUID.randomUUID().toString());
+            stcAuthorizationGrantType.setValue(x.getValue());
+            stcAuthorizationGrantType.setClient(savedClient);
+            return stcAuthorizationGrantType;
+        }).collect(Collectors.toSet());
+        stcAuthorizationGrantTypeRepository.saveAll(stcAuthorizationGrantTypes);
+
+        // redirect uris
+        Set<RedirectUri> redirectUris = registeredClient.getRedirectUris().stream().map(x -> {
+            RedirectUri redirectUri = new RedirectUri();
+            redirectUri.setId(UUID.randomUUID().toString());
+            redirectUri.setValue(x);
+            redirectUri.setClient(savedClient);
+            return redirectUri;
+        }).collect(Collectors.toSet());
+        redirectUriRepository.saveAll(redirectUris);
+
+        // post logout redirect uris
+        Set<PostLogoutRedirectUri> postLogoutRedirectUris = registeredClient.getPostLogoutRedirectUris().stream().map(x -> {
+            PostLogoutRedirectUri postLogoutRedirectUri = new PostLogoutRedirectUri();
+            postLogoutRedirectUri.setId(UUID.randomUUID().toString());
+            postLogoutRedirectUri.setValue(x);
+            postLogoutRedirectUri.setClient(savedClient);
+            return postLogoutRedirectUri;
+        }).collect(Collectors.toSet());
+        postLogoutRedirectUriRepository.saveAll(postLogoutRedirectUris);
+
+        // scopes
+        Set<Scope> scopes = registeredClient.getScopes().stream().map(x -> {
+            Scope scope = new Scope();
+            scope.setId(UUID.randomUUID().toString());
+            scope.setValue(x);
+            scope.setClient(savedClient);
+            return scope;
+        }).collect(Collectors.toSet());
+        scopeRepository.saveAll(scopes);
     }
 
     @Override
@@ -94,32 +166,39 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
     }
 
     private RegisteredClient toObject(Client client) {
-        Set<String> clientAuthenticationMethods = StringUtils.commaDelimitedListToSet(
-                client.getClientAuthenticationMethods());
-        Set<String> authorizationGrantTypes = StringUtils.commaDelimitedListToSet(
-                client.getAuthorizationGrantTypes());
-        Set<String> redirectUris = StringUtils.commaDelimitedListToSet(
-                client.getRedirectUris());
-        Set<String> postLogoutRedirectUris = StringUtils.commaDelimitedListToSet(
-                client.getPostLogoutRedirectUris());
-        Set<String> clientScopes = StringUtils.commaDelimitedListToSet(
-                client.getScopes());
-
         RegisteredClient.Builder builder = RegisteredClient.withId(client.getId())
                 .clientId(client.getClientId())
                 .clientIdIssuedAt(client.getClientIdIssuedAt())
                 .clientSecret(client.getClientSecret())
                 .clientSecretExpiresAt(client.getClientSecretExpiresAt())
-                .clientName(client.getClientName())
-                .clientAuthenticationMethods(authenticationMethods ->
-                        clientAuthenticationMethods.forEach(authenticationMethod ->
-                                authenticationMethods.add(resolveClientAuthenticationMethod(authenticationMethod))))
-                .authorizationGrantTypes((grantTypes) ->
-                        authorizationGrantTypes.forEach(grantType ->
-                                grantTypes.add(resolveAuthorizationGrantType(grantType))))
-                .redirectUris((uris) -> uris.addAll(redirectUris))
-                .postLogoutRedirectUris((uris) -> uris.addAll(postLogoutRedirectUris))
-                .scopes((scopes) -> scopes.addAll(clientScopes));
+                .clientName(client.getClientName());
+
+        if (client.getClientAuthenticationMethods() != null) {
+            Set<ClientAuthenticationMethod> clientAuthenticationMethods = client.getClientAuthenticationMethods().stream().map(x -> {
+                String authenticationMethod = x.getValue();
+                return resolveClientAuthenticationMethod(authenticationMethod);
+            }).collect(Collectors.toSet());
+            builder.clientAuthenticationMethods(authenticationMethods -> authenticationMethods.addAll(clientAuthenticationMethods));
+        }
+        if (client.getAuthorizationGrantTypes() != null) {
+            Set<AuthorizationGrantType> authorizationGrantTypes = client.getAuthorizationGrantTypes().stream().map(x -> {
+                String grantType = x.getValue();
+                return resolveAuthorizationGrantType(grantType);
+            }).collect(Collectors.toSet());
+            builder.authorizationGrantTypes(grantTypes -> grantTypes.addAll(authorizationGrantTypes));
+        }
+        if (client.getRedirectUris() != null) {
+            Set<String> redirectUris = client.getRedirectUris().stream().map(RedirectUri::getValue).collect(Collectors.toSet());
+            builder.redirectUris(uris -> uris.addAll(redirectUris));
+        }
+        if (client.getPostLogoutRedirectUris() != null) {
+            Set<String> postLogoutRedirectUris = client.getPostLogoutRedirectUris().stream().map(PostLogoutRedirectUri::getValue).collect(Collectors.toSet());
+            builder.postLogoutRedirectUris(uris -> uris.addAll(postLogoutRedirectUris));
+        }
+        if (client.getScopes() != null) {
+            Set<String> scopes = client.getScopes().stream().map(Scope::getValue).collect(Collectors.toSet());
+            builder.scopes(clientScopes -> clientScopes.addAll(scopes));
+        }
 
         Map<String, Object> clientSettingsMap = parseMap(client.getClientSettings());
         builder.clientSettings(ClientSettings.withSettings(clientSettingsMap).build());
@@ -131,13 +210,13 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
     }
 
     private Client toEntity(RegisteredClient registeredClient) {
-        List<String> clientAuthenticationMethods = new ArrayList<>(registeredClient.getClientAuthenticationMethods().size());
-        registeredClient.getClientAuthenticationMethods().forEach(clientAuthenticationMethod ->
-                clientAuthenticationMethods.add(clientAuthenticationMethod.getValue()));
-
-        List<String> authorizationGrantTypes = new ArrayList<>(registeredClient.getAuthorizationGrantTypes().size());
-        registeredClient.getAuthorizationGrantTypes().forEach(authorizationGrantType ->
-                authorizationGrantTypes.add(authorizationGrantType.getValue()));
+//        List<String> clientAuthenticationMethods = new ArrayList<>(registeredClient.getClientAuthenticationMethods().size());
+//        registeredClient.getClientAuthenticationMethods().forEach(clientAuthenticationMethod ->
+//                clientAuthenticationMethods.add(clientAuthenticationMethod.getValue()));
+//
+//        List<String> authorizationGrantTypes = new ArrayList<>(registeredClient.getAuthorizationGrantTypes().size());
+//        registeredClient.getAuthorizationGrantTypes().forEach(authorizationGrantType ->
+//                authorizationGrantTypes.add(authorizationGrantType.getValue()));
 
         Client entity = new Client();
         entity.setId(registeredClient.getId());
@@ -146,11 +225,11 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
         entity.setClientSecret(registeredClient.getClientSecret());
         entity.setClientSecretExpiresAt(registeredClient.getClientSecretExpiresAt());
         entity.setClientName(registeredClient.getClientName());
-        entity.setClientAuthenticationMethods(StringUtils.collectionToCommaDelimitedString(clientAuthenticationMethods));
-        entity.setAuthorizationGrantTypes(StringUtils.collectionToCommaDelimitedString(authorizationGrantTypes));
-        entity.setRedirectUris(StringUtils.collectionToCommaDelimitedString(registeredClient.getRedirectUris()));
-        entity.setPostLogoutRedirectUris(StringUtils.collectionToCommaDelimitedString(registeredClient.getPostLogoutRedirectUris()));
-        entity.setScopes(StringUtils.collectionToCommaDelimitedString(registeredClient.getScopes()));
+//        entity.setClientAuthenticationMethods(StringUtils.collectionToCommaDelimitedString(clientAuthenticationMethods));
+//        entity.setAuthorizationGrantTypes(StringUtils.collectionToCommaDelimitedString(authorizationGrantTypes));
+//        entity.setRedirectUris(StringUtils.collectionToCommaDelimitedString(registeredClient.getRedirectUris()));
+//        entity.setPostLogoutRedirectUris(StringUtils.collectionToCommaDelimitedString(registeredClient.getPostLogoutRedirectUris()));
+//        entity.setScopes(StringUtils.collectionToCommaDelimitedString(registeredClient.getScopes()));
         entity.setClientSettings(writeMap(registeredClient.getClientSettings().getSettings()));
         entity.setTokenSettings(writeMap(registeredClient.getTokenSettings().getSettings()));
 

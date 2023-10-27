@@ -1,15 +1,17 @@
 package com.example.ssodemo.model;
 
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.Set;
 
 @Entity
 @Table(name = "`client`")
+@NoArgsConstructor
+@AllArgsConstructor
 public class Client {
     @Id
     private String id;
@@ -18,19 +20,26 @@ public class Client {
     private String clientSecret;
     private Instant clientSecretExpiresAt;
     private String clientName;
-    @Column(length = 1000)
-    private String clientAuthenticationMethods;
-    @Column(length = 1000)
-    private String authorizationGrantTypes;
-    @Column(length = 1000)
-    private String redirectUris;
-    @Column(length = 1000)
-    private String postLogoutRedirectUris;
-    @Column(length = 1000)
-    private String scopes;
-    @Column(length = 2000)
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.EAGER)
+    private Set<StcClientAuthenticationMethod> clientAuthenticationMethods;
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.EAGER)
+    private Set<StcAuthorizationGrantType> authorizationGrantTypes;
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.EAGER)
+    private Set<RedirectUri> redirectUris;
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.EAGER)
+    private Set<PostLogoutRedirectUri> postLogoutRedirectUris;
+
+    @OneToMany(mappedBy = "client", fetch = FetchType.EAGER)
+    private Set<Scope> scopes;
+
+    @Column(columnDefinition = "Text")
     private String clientSettings;
-    @Column(length = 2000)
+
+    @Column(columnDefinition = "Text")
     private String tokenSettings;
 
     public String getId() {
@@ -81,43 +90,43 @@ public class Client {
         this.clientName = clientName;
     }
 
-    public String getClientAuthenticationMethods() {
+    public Set<StcClientAuthenticationMethod> getClientAuthenticationMethods() {
         return clientAuthenticationMethods;
     }
 
-    public void setClientAuthenticationMethods(String clientAuthenticationMethods) {
+    public void setClientAuthenticationMethods(Set<StcClientAuthenticationMethod> clientAuthenticationMethods) {
         this.clientAuthenticationMethods = clientAuthenticationMethods;
     }
 
-    public String getAuthorizationGrantTypes() {
+    public Set<StcAuthorizationGrantType> getAuthorizationGrantTypes() {
         return authorizationGrantTypes;
     }
 
-    public void setAuthorizationGrantTypes(String authorizationGrantTypes) {
+    public void setAuthorizationGrantTypes(Set<StcAuthorizationGrantType> authorizationGrantTypes) {
         this.authorizationGrantTypes = authorizationGrantTypes;
     }
 
-    public String getRedirectUris() {
+    public Set<RedirectUri> getRedirectUris() {
         return redirectUris;
     }
 
-    public void setRedirectUris(String redirectUris) {
+    public void setRedirectUris(Set<RedirectUri> redirectUris) {
         this.redirectUris = redirectUris;
     }
 
-    public String getPostLogoutRedirectUris() {
-        return this.postLogoutRedirectUris;
+    public Set<PostLogoutRedirectUri> getPostLogoutRedirectUris() {
+        return postLogoutRedirectUris;
     }
 
-    public void setPostLogoutRedirectUris(String postLogoutRedirectUris) {
+    public void setPostLogoutRedirectUris(Set<PostLogoutRedirectUri> postLogoutRedirectUris) {
         this.postLogoutRedirectUris = postLogoutRedirectUris;
     }
 
-    public String getScopes() {
+    public Set<Scope> getScopes() {
         return scopes;
     }
 
-    public void setScopes(String scopes) {
+    public void setScopes(Set<Scope> scopes) {
         this.scopes = scopes;
     }
 
@@ -136,5 +145,4 @@ public class Client {
     public void setTokenSettings(String tokenSettings) {
         this.tokenSettings = tokenSettings;
     }
-
 }
