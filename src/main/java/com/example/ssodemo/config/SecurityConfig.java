@@ -26,11 +26,16 @@ import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 @Configuration
@@ -42,7 +47,9 @@ public class SecurityConfig {
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
-                .oidc(oidc -> oidc.clientRegistrationEndpoint(Customizer.withDefaults()));
+                .oidc(oidc -> oidc.clientRegistrationEndpoint(Customizer.withDefaults()))
+        // customize other authorization server config
+        ;
         http.oauth2ResourceServer(oauth2ResourceServer ->
                 oauth2ResourceServer.jwt(Customizer.withDefaults()));
 
@@ -59,7 +66,7 @@ public class SecurityConfig {
                 .oauth2ResourceServer((resourceServer) -> resourceServer
                         .jwt(Customizer.withDefaults()));
 
-        return http.build();
+        return http.cors(Customizer.withDefaults()).build();
     }
 
     @Bean
@@ -74,7 +81,7 @@ public class SecurityConfig {
                 // authorization server filter chain
                 .formLogin(Customizer.withDefaults());
 
-        return http.build();
+        return http.cors(Customizer.withDefaults()).build();
     }
 
     @Bean
@@ -93,6 +100,7 @@ public class SecurityConfig {
         return new JpaRegisteredClientRepository(clientRepository);
     }
 
+    // jwk source: use for signing access token
     @Bean
     public JWKSource<SecurityContext> jwkSource() {
         KeyPair keyPair = generateRsaKey();
@@ -106,6 +114,7 @@ public class SecurityConfig {
         return new ImmutableJWKSet<>(jwkSet);
     }
 
+    // generate random keypair on startup
     private static KeyPair generateRsaKey() {
         KeyPair keyPair;
         try {
@@ -119,6 +128,7 @@ public class SecurityConfig {
         return keyPair;
     }
 
+    // for decoding signed access token
     @Bean
     public JwtDecoder jwtDecoder(JWKSource<SecurityContext> jwkSource) {
         return OAuth2AuthorizationServerConfiguration.jwtDecoder(jwkSource);
@@ -128,5 +138,36 @@ public class SecurityConfig {
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder().build();
     }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        List<String> allowOrigins = Arrays.asList("http://localhost:4200");
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+//        config.addAllowedOrigin("http://127.0.0.1:4200");
+        config.setAllowedOrigins(allowOrigins);
+        config.setAllowCredentials(true);
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+
+//    @Bean
+//    public AuthorizationServerSettings authorizationServerSettings() {
+//        return AuthorizationServerSettings.builder()
+//                .issuer("https://example.com")
+//                .authorizationEndpoint("/oauth2/v1/authorize")
+//                .deviceAuthorizationEndpoint("/oauth2/v1/device_authorization")
+//                .deviceVerificationEndpoint("/oauth2/v1/device_verification")
+//                .tokenEndpoint("/oauth2/v1/token")
+//                .tokenIntrospectionEndpoint("/oauth2/v1/introspect")
+//                .tokenRevocationEndpoint("/oauth2/v1/revoke")
+//                .jwkSetEndpoint("/oauth2/v1/jwks")
+//                .oidcLogoutEndpoint("/connect/v1/logout")
+//                .oidcUserInfoEndpoint("/connect/v1/userinfo")
+//                .oidcClientRegistrationEndpoint("/connect/v1/register")
+//                .build();
+//    }
 
 }
