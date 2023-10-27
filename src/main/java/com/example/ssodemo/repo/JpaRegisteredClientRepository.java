@@ -68,6 +68,7 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
                     .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                     .scope("openid")
+                    .scope("profile")
                     .redirectUri("http://localhost:4200")
                     .build();
             this.save(registeredClient);

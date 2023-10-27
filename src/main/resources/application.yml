@@ -8,7 +8,7 @@ logging:
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/sso_demo
+    url: jdbc:mysql://127.0.0.1:3306/sun_id
     username: root
     password: Root@123
   jpa:
