@@ -7,7 +7,10 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import com.example.ssodemo.model.Authorization;
+import com.example.ssodemo.model.dto.SecurityUser;
+import com.example.ssodemo.model.dto.SecurityUserMixin;
 import com.example.ssodemo.repo.AuthorizationRepository;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -50,6 +53,7 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
         List<Module> securityModules = SecurityJackson2Modules.getModules(classLoader);
         this.objectMapper.registerModules(securityModules);
         this.objectMapper.registerModule(new OAuth2AuthorizationServerJackson2Module());
+        this.objectMapper.addMixIn(SecurityUser.class, SecurityUserMixin.class);
     }
 
     @Override
@@ -292,6 +296,19 @@ public class JpaOAuth2AuthorizationService implements OAuth2AuthorizationService
         }
         return new AuthorizationGrantType(authorizationGrantType);              // Custom authorization grant type
     }
+
+//    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+//    @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY, getterVisibility = JsonAutoDetect.Visibility.NONE,
+//            isGetterVisibility = JsonAutoDetect.Visibility.NONE)
+//    @JsonIgnoreProperties(ignoreUnknown = true)
+//    static class MemberMixin {
+//
+//        @JsonCreator
+//        public MemberMixin(@JsonProperty("id") Long id, @JsonProperty("username") String username, @JsonProperty("password") String password) {
+//        }
+//
+//    }
+
 }
 
 

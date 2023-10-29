@@ -23,6 +23,7 @@ public class UserDetailServiceImpl implements UserDetailsService {
         if (user.getPassword() == null) {
             throw new StcException("incorect username or password", "incorect username or password");
         }
+//        return new org.springframework.security.core.userdetails.User(user.getUsername(), user.getPassword(), new ArrayList<>());
         return new SecurityUser(user);
     }
 
