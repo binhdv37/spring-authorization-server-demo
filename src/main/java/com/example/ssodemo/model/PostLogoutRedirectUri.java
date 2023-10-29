@@ -11,7 +11,7 @@ import lombok.Setter;
 public class PostLogoutRedirectUri {
     @Id
     private String id;
-    private String value;
+    private String uri;
     @ManyToOne
     @JoinColumn(name = "client_id")
     private Client client;

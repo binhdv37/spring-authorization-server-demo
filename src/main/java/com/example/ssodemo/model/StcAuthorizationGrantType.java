@@ -1,18 +1,19 @@
 package com.example.ssodemo.model;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
 @Table(name = "stc_authorization_grant_type")
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class StcAuthorizationGrantType {
     @Id
     private String id;
-    private String value;
-    @ManyToOne
-    @JoinColumn(name = "client_id")
-    private Client client;
+    private String grantType; // AuthorizationGrantType
 }

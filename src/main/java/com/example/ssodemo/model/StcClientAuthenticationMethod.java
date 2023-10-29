@@ -15,9 +15,6 @@ import lombok.Setter;
 public class StcClientAuthenticationMethod {
     @Id
     private String id;
-    private String value;
-    @ManyToOne
-    @JoinColumn(name = "client_id")
-    private Client client;
+    private String method; // ClientAuthenticationMethod
 }
 

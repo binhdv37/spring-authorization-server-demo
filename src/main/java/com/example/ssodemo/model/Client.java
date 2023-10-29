@@ -21,10 +21,20 @@ public class Client {
     private Instant clientSecretExpiresAt;
     private String clientName;
 
-    @OneToMany(mappedBy = "client", fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "client_stcclientauthenticationmethod",
+            joinColumns = @JoinColumn(name = "client_id"),
+            inverseJoinColumns = @JoinColumn(name = "stc_client_authentication_method_id")
+    )
     private Set<StcClientAuthenticationMethod> clientAuthenticationMethods;
 
-    @OneToMany(mappedBy = "client", fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "client_stcauthorizationgranttype",
+            joinColumns = @JoinColumn(name = "client_id"),
+            inverseJoinColumns = @JoinColumn(name = "stc_authorization_grant_type_id")
+    )
     private Set<StcAuthorizationGrantType> authorizationGrantTypes;
 
     @OneToMany(mappedBy = "client", fetch = FetchType.EAGER)
@@ -33,7 +43,12 @@ public class Client {
     @OneToMany(mappedBy = "client", fetch = FetchType.EAGER)
     private Set<PostLogoutRedirectUri> postLogoutRedirectUris;
 
-    @OneToMany(mappedBy = "client", fetch = FetchType.EAGER)
+    @OneToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "client_scope",
+            joinColumns = @JoinColumn(name = "client_id"),
+            inverseJoinColumns = @JoinColumn(name = "scope_id")
+    )
     private Set<Scope> scopes;
 
     @Column(columnDefinition = "Text")
