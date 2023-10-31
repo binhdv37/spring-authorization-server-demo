@@ -117,17 +117,17 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
             this.scopeRepository.saveAll(scopes);
         }
 
-        RegisteredClient existed = this.findByClientId("public-client");
+        RegisteredClient existed = this.findByClientId("web-admin-client");
         if (existed == null) {
             RegisteredClient registeredClient = RegisteredClient
                     .withId(UUID.randomUUID().toString())
-                    .clientId("public-client")
+                    .clientId("web-admin-client")
                     .clientName("web admin")
                     .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                     .scope(ScopeConst.openid)
                     .scope(ScopeConst.profile)
-                    .redirectUri("http://localhost:4200")
+                    .redirectUri("http://localhost:4300/auth/sso/callback/authorize")
                     .build();
             this.save(registeredClient);
         }

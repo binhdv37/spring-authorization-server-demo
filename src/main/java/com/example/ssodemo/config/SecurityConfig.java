@@ -189,7 +189,7 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        List<String> allowOrigins = Arrays.asList("http://localhost:4200");
+        List<String> allowOrigins = Arrays.asList("http://localhost:4200", "http://localhost:4300");
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         CorsConfiguration config = new CorsConfiguration();
         config.addAllowedHeader("*");
