@@ -117,20 +117,36 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
             this.scopeRepository.saveAll(scopes);
         }
 
-        RegisteredClient existed = this.findByClientId("web-admin-client");
-        if (existed == null) {
+//        RegisteredClient existed = this.findByClientId("web-admin-client");
+//        if (existed == null) {
+//            RegisteredClient registeredClient = RegisteredClient
+//                    .withId(UUID.randomUUID().toString())
+//                    .clientId("web-admin-client")
+//                    .clientName("web admin")
+//                    .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+//                    .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+//                    .scope(ScopeConst.openid)
+//                    .scope(ScopeConst.profile)
+//                    .redirectUri("http://localhost:4300/auth/sso/callback/authorize")
+//                    .build();
+//            this.save(registeredClient);
+//        }
+
+        RegisteredClient client2 = this.findByClientId("client-2");
+        if (client2 == null) {
             RegisteredClient registeredClient = RegisteredClient
                     .withId(UUID.randomUUID().toString())
-                    .clientId("web-admin-client")
-                    .clientName("web admin")
+                    .clientId("client-2")
+                    .clientName("client 2")
                     .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
                     .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                     .scope(ScopeConst.openid)
                     .scope(ScopeConst.profile)
-                    .redirectUri("http://localhost:4300/auth/sso/callback/authorize")
+                    .redirectUri("http://localhost:4200/callback")
                     .build();
             this.save(registeredClient);
         }
+
     }
 
     @Transactional
