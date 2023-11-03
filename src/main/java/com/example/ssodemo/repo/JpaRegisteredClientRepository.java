@@ -128,6 +128,7 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
                     .scope(ScopeConst.openid)
                     .scope(ScopeConst.profile)
                     .redirectUri("http://localhost:4300/auth/sso/callback/authorize")
+                    .postLogoutRedirectUri("http://localhost:4300")
                     .build();
             this.save(registeredClient);
         }
@@ -143,6 +144,7 @@ public class JpaRegisteredClientRepository implements RegisteredClientRepository
                     .scope(ScopeConst.openid)
                     .scope(ScopeConst.profile)
                     .redirectUri("http://localhost:4200/callback")
+                    .postLogoutRedirectUri("http://localhost:4200")
                     .build();
             this.save(registeredClient);
         }
